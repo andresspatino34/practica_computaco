@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Convergencia de Series Infinitas</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX CDN for LaTeX rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-symbol">&sum;</span>
+                <div>
+                    <h1>CalculoVacacional <span>Series</span></h1>
+                    <p>Analizador de Convergencia de Series Infinitas</p>
+                </div>
+            </div>
+            <div class="header-badge">Estructura Base v1.0</div>
+        </header>
+
+        <main class="app-main">
+            <!-- Controls Column -->
+            <section class="card input-card">
+                <h2><span class="icon">fx</span> Configuración de la Serie</h2>
+                <p class="subtitle">Introduce el término general \(a_n\) de la serie \(\sum_{n=n_0}^{\infty} a_n\)</p>
+
+                <!-- Condición a: Selección de series prestablecidas -->
+                <div class="condition-box">
+                    <div class="condition-header">
+                        <span class="condition-tag">Condición a</span>
+                        <h3>Selecciona una de las siguientes series:</h3>
+                    </div>
+                    
+                    <div class="series-cards-grid">
+                        <button type="button" class="series-card active" data-expr="1/n" data-n0="1">
+                            <span class="series-number">1</span>
+                            <div class="katex-render" data-katex="\sum_{n=1}^{\infty} \frac{1}{n}"></div>
+                        </button>
+
+                        <button type="button" class="series-card" data-expr="1/n**2" data-n0="1">
+                            <span class="series-number">2</span>
+                            <div class="katex-render" data-katex="\sum_{n=1}^{\infty} \frac{1}{n^2}"></div>
+                        </button>
+
+                        <button type="button" class="series-card" data-expr="(-1)**n / n" data-n0="1">
+                            <span class="series-number">3</span>
+                            <div class="katex-render" data-katex="\sum_{n=1}^{\infty} \frac{(-1)^n}{n}"></div>
+                        </button>
+
+                        <button type="button" class="series-card" data-expr="n / (2**n)" data-n0="1">
+                            <span class="series-number">4</span>
+                            <div class="katex-render" data-katex="\sum_{n=1}^{\infty} \frac{n}{2^n}"></div>
+                        </button>
+                    </div>
+
+                    <div class="form-group select-wrapper">
+                        <label for="series-select">O selecciona desde el menú desplegable:</label>
+                        <select id="series-select">
+                            <option value="1/n">1. ∑ (1 / n)</option>
+                            <option value="1/n**2">2. ∑ (1 / n²)</option>
+                            <option value="(-1)**n / n">3. ∑ ((-1)ⁿ / n)</option>
+                            <option value="n / (2**n)">4. ∑ (n / 2ⁿ)</option>
+                            <option value="custom">-- Otra serie (Personalizada) --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Condición b: Configuración del número de sumas parciales N -->
+                <div class="condition-box condition-b">
+                    <div class="condition-header">
+                        <span class="condition-tag tag-b">Condición b</span>
+                        <h3>Ingresa el valor de N (Sumas parciales):</h3>
+                    </div>
+
+                    <form id="series-form">
+                        <div class="form-group" id="custom-input-group">
+                            <label for="expression-input">Término General \(a_n\):</label>
+                            <div class="input-with-preview">
+                                <input type="text" id="expression-input" placeholder="Ej: 1/n**2, 1/n, 2**n / factorial(n)" value="1/n" required autocomplete="off">
+                                <div class="latex-live-preview" id="live-preview">
+                                    <span class="placeholder-text">Vista previa LaTeX...</span>
+                                </div>
+                            </div>
+                            <span class="help-text">Soporta operadores Python/Matemáticos: +, -, *, /, **, ^, factorial(n), sin(n), cos(n), ln(n), sqrt(n), e, pi.</span>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-half">
+                                <label for="n0-input">Índice Inicial (\(n_0\)):</label>
+                                <input type="number" id="n0-input" value="1" min="0" required>
+                            </div>
+                            <div class="form-group col-half">
+                                <label for="terms-input">Número de Términos (\(N\)):</label>
+                                <input type="number" id="terms-input" value="10" min="1" max="200" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="analyze-btn" class="btn-primary">
+                            <span class="btn-text">Calcular y Analizar Serie</span>
+                            <div class="spinner" id="btn-spinner" hidden></div>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Results Column -->
+            <section class="card results-card" id="results-card">
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-icon">&sum;</div>
+                    <h3>Introduce una serie y un valor N para Analizar</h3>
+                    <p>El sistema calculará las primeras N sumas parciales \(S_1, S_2, \dots, S_N\), determinará la convergencia y mostrará el gráfico.</p>
+                </div>
+
+                <div class="results-content" id="results-content" hidden>
+                    <!-- Status Header -->
+                    <div class="status-banner" id="status-banner">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text" id="status-text">CONVERGENTE</span>
+                        </div>
+                        <div class="series-display" id="series-display"></div>
+                    </div>
+
+                    <!-- Condition b Highlight Box -->
+                    <div class="condition-b-result-card">
+                        <div class="card-badge">Condición b</div>
+                        <h4>Suma Parcial \(S_N\) (\(N = <span id="display-n-val">10</span>\))</h4>
+                        <div class="sn-latex-val" id="val-sn-exact">\(S_N = --\)</div>
+                        <div class="sn-numeric-val" id="val-sn-num">Valor aproximado: --</div>
+                    </div>
+
+                    <!-- Summary Grid -->
+                    <div class="summary-grid">
+                        <div class="summary-box">
+                            <span class="box-label">Límite \( \lim_{n \to \infty} a_n \)</span>
+                            <div class="box-value" id="val-limit">--</div>
+                        </div>
+                        <div class="summary-box">
+                            <span class="box-label">Suma Infinita Exacta</span>
+                            <div class="box-value" id="val-sum-exact">--</div>
+                        </div>
+                        <div class="summary-box">
+                            <span class="box-label">Aproximación Numérica Infinita</span>
+                            <div class="box-value" id="val-sum-num">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Convergence Tests Breakdown -->
+                    <div class="section-title">
+                        <h3>Criterios Evaluados</h3>
+                    </div>
+                    <div class="tests-list" id="tests-list">
+                        <!-- Dynamic tests inserted here -->
+                    </div>
+
+                    <!-- Partial Sums Graph (Condition b) -->
+                    <div class="section-title">
+                        <h3>Gráfica de las Primeras \(N\) Sumas Parciales \(S_n\)</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="partial-sums-chart"></canvas>
+                    </div>
+
+                    <!-- Partial Sums Table (Condition b) -->
+                    <div class="section-title">
+                        <h3>Tabla de las Primeras \(N\) Sumas Parciales (\(n = 1 \dots N\))</h3>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="terms-table">
+                            <thead>
+                                <tr>
+                                    <th>n</th>
+                                    <th>Término aₙ</th>
+                                    <th>Suma Parcial Sₙ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="terms-table-body">
+                                <!-- Dynamic rows inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>CalculoVacacional &bull; Analizador de Series Infinitas en Python & Flask &bull; Listo para personalización de reglas</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
